@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SONAR_ORG = 'manasvigk'  // Replace with your SonarCloud org
-        SONAR_PROJECT = 'Manasvigk_Company-managed-project'  // Replace with your project key
+        SONAR_ORG = 'manasvigk'
+        SONAR_PROJECT = 'Manasvigk_Company-managed-project'
     }
 
     stages {
@@ -17,10 +17,6 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building the project...'
-            // Add your build commands here
-            // Example for Maven: sh 'mvn clean compile'
-            // Example for Node.js: sh 'npm install'
-            // Example for Python: sh 'pip install -r requirements.txt'
             }
         }
 
@@ -28,7 +24,6 @@ pipeline {
             steps {
                 echo 'Running SonarQube code analysis...'
                 script {
-                    // Use the tool installed by Jenkins
                     def scannerHome = tool 'SonarScanner'
                     withSonarQubeEnv('SonarCloud') {
                         sh """
@@ -36,34 +31,28 @@ pipeline {
                             -Dsonar.organization=${SONAR_ORG} \
                             -Dsonar.projectKey=${SONAR_PROJECT} \
                             -Dsonar.sources=. \
-                            -Dsonar.host.url=https://sonarcloud.io
+                            -Dsonar.host.url=https://sonarcloud.io \
+                            -Dsonar.qualitygate.wait=true
                         """
+                        // The flag above waits for the result. 
+                        // If it fails on SonarCloud, this step will fail here.
                     }
                 }
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                echo 'Checking SonarQube Quality Gate...'
-                timeout(time: 15, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        // REMOVED the separate 'Quality Gate' stage because 
+        // 'sonar.qualitygate.wait=true' handles it in the previous stage.
 
         stage('Test') {
             steps {
                 echo 'Running tests...'
-            // Add your test commands here
-            // Example: sh 'mvn test'
             }
         }
 
         stage('Deploy') {
             steps {
                 echo 'Deployment stage...'
-            // Add deployment commands if needed
             }
         }
     }
@@ -75,15 +64,10 @@ pipeline {
                 body: """
                     <h2>Build Successful!</h2>
                     <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                    <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                    <p><strong>Branch:</strong> ${env.GIT_BRANCH}</p>
-                    <p><strong>Commit:</strong> ${env.GIT_COMMIT}</p>
                     <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
                     <p><strong>SonarQube:</strong> Quality Gate Passed ✅</p>
-                    <hr>
-                    <p>Check the console output at: ${env.BUILD_URL}console</p>
                 """,
-                to: 'your-email@gmail.com',  // Replace with your email
+                to: 'kombademanasvi@gmail.com',
                 mimeType: 'text/html'
             )
         }
@@ -94,22 +78,17 @@ pipeline {
                 body: """
                     <h2>Build Failed!</h2>
                     <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                    <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                    <p><strong>Branch:</strong> ${env.GIT_BRANCH}</p>
-                    <p><strong>Commit:</strong> ${env.GIT_COMMIT}</p>
                     <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                    <p><strong>Failure Stage:</strong> Check console for details</p>
-                    <hr>
-                    <p>Check the console output at: ${env.BUILD_URL}console</p>
+                    <p><strong>Note:</strong> Check if the Quality Gate failed or a build error occurred.</p>
                 """,
-                to: 'your-email@gmail.com',  // Replace with your email
+                to: 'kombademanasvi@gmail.com',
                 mimeType: 'text/html'
             )
         }
 
         always {
             echo 'Pipeline execution completed.'
-            cleanWs()  // Clean workspace after build
+            cleanWs()
         }
     }
 }
