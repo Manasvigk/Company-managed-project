@@ -1,11 +1,11 @@
 pipeline {
     agent any
-    
+
     environment {
         SONAR_ORG = 'manasvigk'  // Replace with your SonarCloud org
         SONAR_PROJECT = 'Manasvigk_Company-managed-project'  // Replace with your project key
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
@@ -13,36 +13,36 @@ pipeline {
                 checkout scm
             }
         }
-        
+
         stage('Build') {
             steps {
                 echo 'Building the project...'
-                // Add your build commands here
-                // Example for Maven: sh 'mvn clean compile'
-                // Example for Node.js: sh 'npm install'
-                // Example for Python: sh 'pip install -r requirements.txt'
+            // Add your build commands here
+            // Example for Maven: sh 'mvn clean compile'
+            // Example for Node.js: sh 'npm install'
+            // Example for Python: sh 'pip install -r requirements.txt'
             }
         }
-        
+
         stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube code analysis...'
-                withSonarQubeEnv('SonarCloud') {
-                    // For Maven projects:
-                    // sh 'mvn sonar:sonar -Dsonar.organization=${SONAR_ORG} -Dsonar.projectKey=${SONAR_PROJECT}'
-                    
-                    // For other projects, use sonar-scanner:
-                    sh """
-                        sonar-scanner \
-                        -Dsonar.organization=${SONAR_ORG} \
-                        -Dsonar.projectKey=${SONAR_PROJECT} \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=https://sonarcloud.io
-                    """
+                script {
+                    // Use the tool installed by Jenkins
+                    def scannerHome = tool 'SonarScanner'
+                    withSonarQubeEnv('SonarCloud') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.organization=${SONAR_ORG} \
+                            -Dsonar.projectKey=${SONAR_PROJECT} \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=https://sonarcloud.io
+                        """
+                    }
                 }
             }
         }
-        
+
         stage('Quality Gate') {
             steps {
                 echo 'Checking SonarQube Quality Gate...'
@@ -51,23 +51,23 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                // Add your test commands here
-                // Example: sh 'mvn test'
+            // Add your test commands here
+            // Example: sh 'mvn test'
             }
         }
-        
+
         stage('Deploy') {
             steps {
                 echo 'Deployment stage...'
-                // Add deployment commands if needed
+            // Add deployment commands if needed
             }
         }
     }
-    
+
     post {
         success {
             emailext(
@@ -87,7 +87,7 @@ pipeline {
                 mimeType: 'text/html'
             )
         }
-        
+
         failure {
             emailext(
                 subject: "❌ Jenkins Build FAILED: ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
@@ -106,7 +106,7 @@ pipeline {
                 mimeType: 'text/html'
             )
         }
-        
+
         always {
             echo 'Pipeline execution completed.'
             cleanWs()  // Clean workspace after build
