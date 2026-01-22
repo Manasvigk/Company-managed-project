@@ -124,6 +124,7 @@ h4 {
     transform: translate(-50%, -50%) rotate(-120deg);
   }
 }
+<<<<<<< HEAD
 
 #replay{
   background-color: #3498db;
@@ -161,3 +162,5 @@ h4 {
   opacity: 1;
   right: 0;
 }
+=======
+>>>>>>> c94e46a (Animated countdown)
